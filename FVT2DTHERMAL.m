@@ -127,35 +127,30 @@ me_temperatures = temperatures ./ count;                   % calculates the aver
 Tno_M = [coords_u, me_temperatures];                       % matrix with coordinates of each node and their average temperatures
 
 %_________________________________________________________PLOTTING OF THE NODAL TEMPERATURE FIELD
-tt = [];
-figure (1);
-hold on
-for j = 1:nx2
-    for i = 1:nx1 
-        q = i + (j-1)*nx1;
-        vert = [(i-1)*l,(j-1)*h; i*l,(j-1)*h; i*l,j*h; (i-1)*l,j*h];
 
-        for ii = 1:4
-            for jj = 1:size(Tno_M)
-                if vert(ii,1) == Tno_M(jj,1) && vert(ii,2) == Tno_M(jj,2)
-                    tt(ii) = Tno_M(jj,3);
-                end
-            end
-        end
+xnodes = unique(Tno_M(:,1));   
+ynodes = unique(Tno_M(:,2));   
+[~,~,ix] = unique(Tno_M(:,1));   
+[~,~,iy] = unique(Tno_M(:,2));   
+Zsum = accumarray([iy ix], Tno_M(:,3), [], @sum);
+Zcnt = accumarray([iy ix], 1,          [], @sum);
+Z    = Zsum ./ Zcnt;                   
 
-    mdl = scatteredInterpolant(vert(:,1), vert(:,2), tt', 'natural');   
-    xg = linspace(min(vert(:,1)'), max(vert(:,1)'), 5);
-    yg = linspace(min(vert(:,2)'), max(vert(:,2)'), 5);   
-    [Xg, Yg] = meshgrid(xg, yg);
-    Zg = mdl(Xg, Yg);
-    surf(Xg, Yg, Zg,'edgecolor','none','facecolor','interp');    
-    end
-end
-    colormap(turbo);
-    colorbar;
-    xlabel('$x_1$', 'Interpreter', 'latex', 'FontSize', 16, 'Color', 'black', 'FontWeight', 'bold');
-    ylabel('$x_2$', 'Interpreter', 'latex', 'FontSize', 16, 'Color', 'black', 'FontWeight', 'bold');
-    title('Finite-Volume Theory (FVT)', 'Interpreter', 'latex');
+[Xg, Yg] = meshgrid(xnodes, ynodes);
+figure(1);
+surf(Xg, Yg, Z);
+view(2);                
+shading flat;          
+axis equal tight;
+colormap(turbo);
+colorbar;
+xlabel('$x_1$', 'Interpreter', 'latex', 'FontSize', 16, ...
+       'Color', 'black', 'FontWeight', 'bold');
+ylabel('$x_2$', 'Interpreter', 'latex', 'FontSize', 16, ...
+       'Color', 'black', 'FontWeight', 'bold');
+title('Finite-Volume Theory (FVT)', 'Interpreter', 'latex', 'FontSize', 16);
+set(gca,'FontSize',12);
+
    
 %_________________________________________________________PLOTTING OF THE TEMPERATURE FIELD WITH A CUT ALONG THE X2 AXIS
 x = 0:0.01:L;
@@ -210,7 +205,6 @@ for dx = 1:length(x)
     T = 100 + sum(k);
     Temp(dx) = T;
 end
-
 ppy = h/2:h:H;
 for i=1:1:length(ppy)
     Tpy(i)=sv(px1).T(4);
@@ -235,9 +229,7 @@ xlim([0 H]);
 function T=nodaltemp(SV,l,h)
 Tij = SV.Tij;
 T00 = SV.T00;
-
 vert = [-l/2,-h/2; l/2,-h/2; l/2,h/2; -l/2,h/2];
-
 for i=1:4 
     x1 = vert(i,1);
     x2 = vert(i,2);
